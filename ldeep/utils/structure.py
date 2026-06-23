@@ -4,11 +4,10 @@
 # of the Apache Software License. See the accompanying LICENSE file
 # for more information.
 #
-from __future__ import division, print_function
-
 from struct import calcsize, pack, unpack
 
-from six import PY3, b
+def b(s):
+    return s.encode("latin-1")
 
 
 class Structure:
@@ -264,21 +263,21 @@ class Structure:
         # asciiz specifier
         if format[:1] == "z":
             if isinstance(data, bytes):
-                return data + b("\0")
-            return bytes(b(data) + b("\0"))
+                return data + b"\0"
+            return bytes(b(data) + b"\0")
 
         # unicode specifier
         if format[:1] == "u":
-            return bytes(data + b("\0\0") + (len(data) & 1 and b("\0") or b""))
+            return bytes(data + b"\0\0" + (len(data) & 1 and b"\0" or b""))
 
         # DCE-RPC/NDR string specifier
         if format[:1] == "w":
             if len(data) == 0:
-                data = b("\0\0")
+                data = b"\0\0"
             elif len(data) % 2:
-                data = b(data) + b("\0")
+                data = b(data) + b"\0"
             l = pack("<L", len(data) // 2)
-            return b"".join([l, l, b("\0\0\0\0"), data])
+            return b"".join([l, l, b"\0\0\0\0", data])
 
         if data is None:
             raise Exception("Trying to pack None")
@@ -378,18 +377,15 @@ class Structure:
 
         # asciiz specifier
         if format == "z":
-            if data[-1:] != b("\x00"):
+            if data[-1:] != b"\x00":
                 raise Exception(
                     "%s 'z' field is not NUL terminated: %r" % (field, data)
                 )
-            if PY3:
-                return data[:-1].decode("latin-1")
-            else:
-                return data[:-1]
+            return data[:-1].decode("latin-1")
 
         # unicode specifier
         if format == "u":
-            if data[-2:] != b("\x00\x00"):
+            if data[-2:] != b"\x00\x00":
                 raise Exception(
                     "%s 'u' field is not NUL-NUL terminated: %r" % (field, data)
                 )
@@ -549,11 +545,11 @@ class Structure:
 
         # asciiz specifier
         if format[:1] == "z":
-            return data.index(b("\x00")) + 1
+            return data.index(b"\x00") + 1
 
         # asciiz specifier
         if format[:1] == "u":
-            l = data.index(b("\x00\x00"))
+            l = data.index(b"\x00\x00")
             return l + (l & 1 and 3 or 2)
 
         # DCE-RPC/NDR string specifier
@@ -609,7 +605,7 @@ class Structure:
         if format in ["z", ":", "u"]:
             return b""
         if format == "w":
-            return b("\x00\x00")
+            return b"\x00\x00"
 
         return 0
 
